@@ -1,258 +1,158 @@
-import pypandoc
-from pathlib import Path
-
-readme = r'''<div align="center">
-
 # Logloom
 
-### Turn terminal chaos into a debugging report.
+**Turn terminal chaos into a debugging report.**
 
-A privacy-first, cross-platform CLI concept for turning noisy terminal output, build logs, and test failures into clean, searchable HTML reports.
+Logloom is a local-first command-line tool that turns noisy terminal output, build logs, and test failures into searchable, standalone HTML reports. It groups repeated messages, preserves the original evidence, and helps you review possible secrets before sharing a report.
 
-<p>
-  <strong>Local-first</strong> · <strong>Python</strong> · <strong>Windows + Linux</strong> · <strong>Open source</strong>
-</p>
+- **Local-first:** your logs are analyzed on your machine.
+- **Lightweight:** Python standard library only; no runtime dependencies.
+- **Cross-platform:** designed for Windows and Linux.
+- **Evidence-led:** findings link back to original log lines. Pattern matches are clues, not guaranteed root causes.
 
-<!-- Replace these placeholders after publishing the repository. -->
-<p>
-  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
-  <img alt="Platform: Windows and Linux" src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-informational">
-  <img alt="Python: 3.11+" src="https://img.shields.io/badge/python-3.11%2B-3776AB">
-  <img alt="Status: Early development" src="https://img.shields.io/badge/status-early%20development-orange">
-</p>
+## Quick start
 
-<!-- Replace this with a real screenshot or GIF once the application exists. -->
-**A preview of the intended workflow**
+Requires Python 3.11 or newer.
 
-```text
- noisy terminal output
-          │
-          ▼
-   ┌───────────────┐
-   │    Logloom    │
-   │ parse + group │
-   │ inspect risks │
-   └───────┬───────┘
-           │
-           ▼
-  standalone HTML report
-  ┌────────────────────────────┐
-  │  Errors found          12  │
-  │  Warnings              28  │
-  │  Repeated groups        7  │
-  │                            │
-  │  [Search] [Severity ▾]     │
-  │                            │
-  │  ERROR  Missing module     │
-  │         build.js:42        │
-  │  WARN   Deprecated option  │
-  │         config.py:18       │
-  └────────────────────────────┘
+### Run from a source checkout
+
+Clone the repository, then run these commands from its directory:
+
+```powershell
+# Analyze a sample log and create an HTML report
+py -m logloom analyze examples\failed-tests.log --output report.html
+
+# Analyze piped output and redact detected secrets in the report
+Get-Content examples\failed-build.log | py -m logloom analyze - --redact
+
+# Run the test suite
+py -m unittest discover
 ```
 
-<sub>Concept illustration only. It is not a screenshot of a released implementation.</sub>
-
-</div>
-
----
-
-## The problem
-
-A failed build can produce thousands of lines of output. The important error may be buried beneath repeated warnings, stack traces, dependency messages, and unrelated noise.
-
-Logloom is designed to make that output easier to investigate. It organizes recognizable patterns, groups repeated messages, preserves references to the original lines, and presents the result in a standalone HTML report.
-
-**The goal is not to replace debugging. It is to make the evidence easier to find.**
-
-## What Logloom aims to do
-
-| Capability | Purpose |
-|---|---|
-| **Log import** | Read log files or accept output through standard input (`stdin`). |
-| **Noise reduction** | Identify repeated messages and common log patterns. |
-| **Failure grouping** | Group similar messages using normalized signatures. |
-| **Interactive report** | Search, filter, expand, and inspect findings in a browser. |
-| **Evidence preservation** | Keep original messages and line references available for verification. |
-| **Privacy checks** | Flag possible secrets so they can be reviewed before a report is shared. |
-| **Cross-platform CLI** | Target Windows and Linux without requiring a hosted service. |
-
-> **Important:** Logloom should distinguish observed facts from heuristics. A first error is not automatically the root cause, and a detected pattern is not proof that two failures have the same cause.
-
-## How it is intended to work
-
-```mermaid
-flowchart TD
-    A["Log file / stdin / pasted output"] --> B["Parser"]
-    B --> C["Normalize messages"]
-    C --> D["Group repeated signatures"]
-    D --> E["Classify recognizable patterns"]
-    E --> F["Flag possible secrets"]
-    F --> G["Generate standalone HTML report"]
-    G --> H["Search, filter and inspect"]
-```
-
-1. **Ingest** — Read the supplied log without executing the commands that produced it.
-2. **Parse** — Identify lines, timestamps, severity labels, and recognizable stack traces where possible.
-3. **Normalize** — Standardize variable portions of messages to find likely duplicates.
-4. **Group** — Present repeated signatures with counts and links to original line numbers.
-5. **Review** — Flag potential secrets for explicit inspection and redaction.
-6. **Report** — Generate a portable HTML file that can be opened locally.
-
-The report should escape untrusted log content before rendering it. Log files can contain arbitrary text, including HTML and script-like content.
-
-## Example workflow
-
-The commands below describe the planned interface; they will work only once the corresponding CLI commands have been implemented and packaged.
+On Linux, the equivalent commands use `python3` and a shell pipe:
 
 ```bash
-# Analyze a log file
+python3 -m logloom analyze examples/failed-tests.log --output report.html
+cat examples/failed-build.log | python3 -m logloom analyze - --redact
+python3 -m unittest discover
+```
+
+Open `report.html` in your browser. The report is standalone and can be viewed locally without a hosted service.
+
+## What it does
+
+### Find the signal in noisy logs
+
+- Parses terminal output and recognizes common severity markers.
+- Normalizes variable parts of messages to group likely duplicates.
+- Recognizes selected patterns from common build tools and test runners.
+- Coalesces closely related pattern-matched findings to reduce clutter.
+- Preserves original line numbers and surrounding context for verification.
+- Handles malformed or unexpected lines defensively.
+
+### Inspect findings in an HTML report
+
+- Search and filter the report.
+- Expand findings to inspect matching output and context.
+- Review original log lines rather than relying on a generated summary alone.
+- Use the report locally; JavaScript enhances interactions, while the report content remains readable without it.
+
+### Review secrets before sharing
+
+Log files may contain credentials, tokens, internal URLs, email addresses, and other private data. Logloom can detect selected secret patterns and redact detected values when requested.
+
+**Important:** without `--redact`, the report may contain original secrets. Detection is heuristic: a clean scan does not prove that a log is safe to share. Always inspect the report before publishing or sending it to someone else.
+
+```powershell
+Get-Content build.log | py -m logloom analyze - --redact
+```
+
+Use `--redact` whenever you want the generated report to scrub values detected by the redaction rules. It cannot guarantee detection of every secret or every custom credential format.
+
+## CLI examples
+
+Analyze a file:
+
+```bash
 logloom analyze build.log --output report.html
+```
 
-# Read terminal output from another command
+Analyze piped output:
+
+```bash
 pytest 2>&1 | logloom analyze -
+```
 
-# Request machine-readable output (planned)
+Generate JSON for downstream tooling:
+
+```bash
 logloom analyze build.log --format json
 ```
 
-Open `report.html` in a browser to inspect the grouped messages and search for relevant errors.
+Redact detected secrets in a report:
 
-### Example report
+```bash
+logloom analyze build.log --redact --output report.html
+```
 
-A report might organize the input into sections like these:
+For the full list of options, run:
 
-| Finding | Count | What you can inspect |
-|---|---:|---|
-| Missing dependency | 8 | Matching messages and original line references |
-| Test assertion failure | 4 | Test output and nearby context |
-| Deprecation warning | 16 | Repeated warning instances |
-| Potential secret | 1 | Location of a value that needs review |
+```bash
+logloom analyze --help
+```
 
-These are illustrative examples, not measured results or claims about current detection accuracy.
+If running from the source checkout before installing the package, use `py -m logloom` on Windows or `python3 -m logloom` on Linux.
 
-## Privacy by design
+## How it works
 
-Log files can contain API keys, access tokens, internal hostnames, file paths, usernames, and other sensitive information.
+```mermaid
+flowchart TD
+    A["Log file or stdin"] --> B["Parse lines and context"]
+    B --> C["Normalize message signatures"]
+    C --> D["Group repeated messages"]
+    D --> E["Identify known patterns"]
+    E --> F["Detect and optionally redact secrets"]
+    F --> G["Generate standalone report"]
+    G --> H["Search, filter and inspect evidence"]
+```
 
-Logloom is intended to process input locally, without uploading logs to a hosted analysis service or requiring an AI API.
+Logloom is intended to help you find useful evidence faster, not to decide the root cause for you. Similar messages can have different causes, and the earliest error is not necessarily the cause of the failure.
 
-Privacy safeguards should include:
+## Performance and testing
 
-- **No automatic upload:** analysis remains on the user's machine.
-- **Review before sharing:** potential secrets are flagged, not silently assumed safe.
-- **Explicit redaction:** let the user inspect redactions before exporting.
-- **Safe rendering:** escape log content in generated HTML.
-- **Clear limitations:** secret detection is heuristic and cannot guarantee that every sensitive value is found.
+The project has **158 automated tests passing** in the current development snapshot. The test suite covers parsing, grouping, pattern detection, redaction, report generation, CLI behavior, and documentation checks.
 
-**Do not treat a report as safe to publish merely because no secrets were detected.** Review it before sharing.
+A development benchmark on a 100,000-line log reported approximately **3.6 seconds total** across parsing, analysis, secret detection, and rendering. Actual performance depends on log contents, hardware, and the report being generated; treat this as a reference measurement, not a universal guarantee.
 
-## Design principles
+Run the test suite locally:
 
-- **Evidence over guesses.** Show the matching lines behind each finding.
-- **Local by default.** No cloud account or AI service should be required.
-- **Portable output.** The report should work as a standalone HTML file.
-- **Small dependency footprint.** Prefer Python's standard library for the core engine where practical.
-- **Cross-platform behavior.** Test supported workflows on Windows and Linux.
-- **Honest uncertainty.** Make heuristic classifications visible and avoid promising automatic root-cause analysis.
+```bash
+python -m unittest discover
+```
+
+## Security and privacy
+
+- Log processing is local; no cloud account or AI API is required.
+- Log content is untrusted input and must be treated carefully.
+- Reports generated without `--redact` can contain original sensitive values.
+- Secret detection can miss credentials and may occasionally flag harmless text.
+- Review reports before sharing them, even after redaction.
+
+If you discover a security issue, avoid posting real credentials or sensitive logs in a public issue. Contact the maintainer privately.
 
 ## Project status
 
-Logloom is an early-stage project concept. Features, commands, packaging, and the report interface are subject to change until implemented and tested.
+Logloom is an early-stage open-source project. Pattern coverage and output formats will evolve as it is tested against more real-world logs. The current goal is a dependable, transparent debugging aid—not automatic root-cause analysis.
 
-| Area | Status |
-|---|---|
-| Project concept and planned workflow | Defined |
-| CLI and parser | To implement |
-| Signature grouping | To implement |
-| Interactive HTML report | To implement |
-| Secret detection and redaction review | To implement |
-| Windows/Linux automated tests | To implement |
-| Published package and release binaries | Not yet available |
+Useful contributions include:
 
-Please do not rely on the example commands as working software until a release is published.
-
-## Planned roadmap
-
-### `v0.1.0` — Useful core
-
-- [ ] Parse a log file and standard input.
-- [ ] Preserve original line numbers and source messages.
-- [ ] Detect common severity labels and error patterns.
-- [ ] Group repeated messages using deterministic signatures.
-- [ ] Generate a self-contained HTML report.
-- [ ] Add search, severity filters, and expandable groups.
-- [ ] Add tests and CI for Windows and Linux.
-
-### `v0.2.0` — Safer sharing
-
-- [ ] Flag common patterns that may contain secrets.
-- [ ] Preview proposed redactions before export.
-- [ ] Add realistic, sanitized log fixtures.
-- [ ] Improve handling of large and malformed inputs.
-- [ ] Document supported patterns and known limitations.
-
-### Future possibilities
-
-- Optional parsers for popular test runners and build tools.
-- JSON output for scripts and automation.
-- Report comparison between two runs.
-- A documented extension interface for additional log formats.
-
-Future items are ideas, not commitments.
-
-## Installation
-
-Installation instructions will be added when a tested package or source distribution is available.
-
-For contributors, the intended development environment is:
-
-- Python 3.11 or newer
-- Git
-- A Windows or Linux environment
-
-The initial implementation aims to avoid third-party runtime dependencies. Development and testing requirements may differ.
-
-## Contributing
-
-Contributions are welcome once the initial codebase is available. Useful areas include:
-
-- Small, reproducible log fixtures with expected results.
-- Parser improvements for common build and test output.
+- Minimal, sanitized log fixtures with expected findings.
+- Parser improvements for build tools and test runners.
 - Cross-platform bug reports.
-- Accessibility and usability improvements for reports.
-- Security reviews of HTML rendering and redaction behavior.
-- Documentation and installation testing.
+- Security testing for HTML rendering and redaction.
+- Documentation and usability improvements.
 
-Before opening a pull request:
-
-1. Describe the problem and the expected behavior.
-2. Include a minimal, sanitized example where possible.
-3. Add or update tests for behavior changes.
-4. Never submit real credentials, private logs, or unredacted sensitive data.
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) when the contributor guide is added.
-
-## Security
-
-If you discover a security issue, avoid publishing sensitive logs or exploit details in a public issue. Use the repository's private security reporting process if one is configured; otherwise, contact the maintainer privately.
-
-Logloom is not a substitute for secret scanning, endpoint security, or a thorough review before sharing logs.
+When reporting a bug, include the smallest sanitized input that reproduces it. **Never attach production logs or credentials without removing sensitive data first.**
 
 ## License
 
-Logloom is intended to be released under the **MIT License**. Add the actual `LICENSE` file before distributing the project, and verify that all included dependencies and assets are compatible with the chosen license.
-
----
-
-<div align="center">
-
-**Less noise. Clearer failures. Faster debugging.**
-
-If this project is useful to you, consider trying it, reporting a reproducible issue, or contributing an improvement.
-
-</div>
-'''
-
-out = Path("/mnt/data/README.md")
-pypandoc.convert_text(readme, "md", format="md", outputfile=str(out), extra_args=["--standalone"])
-print(f"Created {out} ({out.stat().st_size:,} bytes)")
+Logloom is released under the [MIT License](LICENSE).
