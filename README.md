@@ -4,71 +4,57 @@
 
 Logloom is a local-first command-line tool that turns noisy terminal output, build logs, and test failures into searchable, standalone HTML reports. It groups repeated messages, preserves the original evidence, and helps you review possible secrets before sharing a report.
 
-- **Local-first:** your logs are analyzed on your machine.
-- **Lightweight:** Python standard library only; no runtime dependencies.
+- **Local-first:** logs are analyzed on your machine; no AI API or hosted service is required.
+- **Lightweight:** no third-party runtime dependencies.
 - **Cross-platform:** designed for Windows and Linux.
-- **Evidence-led:** findings link back to original log lines. Pattern matches are clues, not guaranteed root causes.
-
-## Quick start
-
-Requires Python 3.11 or newer.
-
-### Run from a source checkout
-
-Clone the repository, then run these commands from its directory:
-
-```powershell
-# Analyze a sample log and create an HTML report
-py -m logloom analyze examples\failed-tests.log --output report.html
-
-# Analyze piped output and redact detected secrets in the report
-Get-Content examples\failed-build.log | py -m logloom analyze - --redact
-
-# Run the test suite
-py -m unittest discover
-```
-
-On Linux, the equivalent commands use `python3` and a shell pipe:
-
-```bash
-python3 -m logloom analyze examples/failed-tests.log --output report.html
-cat examples/failed-build.log | python3 -m logloom analyze - --redact
-python3 -m unittest discover
-```
-
-Open `report.html` in your browser. The report is standalone and can be viewed locally without a hosted service.
+- **Evidence-led:** findings retain source context. Pattern matches are clues, not guaranteed root causes.
 
 ## What it does
 
-### Find the signal in noisy logs
+- Parses terminal output and recognizes selected severity labels and common failure patterns.
+- Groups likely duplicates using normalized message signatures.
+- Reduces clutter from repeated messages while preserving original line references.
+- Generates a standalone HTML report with search and filtering.
+- Detects selected secret patterns and can redact detected values in the report.
+- Offers JSON output for scripting and automation.
 
-- Parses terminal output and recognizes common severity markers.
-- Normalizes variable parts of messages to group likely duplicates.
-- Recognizes selected patterns from common build tools and test runners.
-- Coalesces closely related pattern-matched findings to reduce clutter.
-- Preserves original line numbers and surrounding context for verification.
-- Handles malformed or unexpected lines defensively.
+## Quick start
 
-### Inspect findings in an HTML report
+Requires Python 3.9 or newer.
 
-- Search and filter the report.
-- Expand findings to inspect matching output and context.
-- Review original log lines rather than relying on a generated summary alone.
-- Use the report locally; JavaScript enhances interactions, while the report content remains readable without it.
-
-### Review secrets before sharing
-
-Log files may contain credentials, tokens, internal URLs, email addresses, and other private data. Logloom can detect selected secret patterns and redact detected values when requested.
-
-**Important:** without `--redact`, the report may contain original secrets. Detection is heuristic: a clean scan does not prove that a log is safe to share. Always inspect the report before publishing or sending it to someone else.
+**The current GitHub repository stores the Python project inside the `logloom/` subdirectory.** Run the commands below from that directory.
 
 ```powershell
-Get-Content build.log | py -m logloom analyze - --redact
+git clone https://github.com/Lidnas/Logloom.git
+cd Logloom\logloom
+
+# Install the CLI in editable mode
+py -m pip install -e .
+
+# Analyze a log file
+logloom analyze examples\failed-build.log --output report.html
+
+# Analyze piped output and redact detected secrets
+Get-Content examples\failed-build.log | logloom analyze - --redact
+
+# View all CLI options
+logloom analyze --help
 ```
 
-Use `--redact` whenever you want the generated report to scrub values detected by the redaction rules. It cannot guarantee detection of every secret or every custom credential format.
+On Linux:
 
-## CLI examples
+```bash
+git clone https://github.com/Lidnas/Logloom.git
+cd Logloom/logloom
+python3 -m pip install -e .
+logloom analyze examples/failed-build.log --output report.html
+cat examples/failed-build.log | logloom analyze - --redact
+logloom analyze --help
+```
+
+Open `report.html` in your browser. The report is a local HTML file; no account or network service is needed to inspect it.
+
+## Example commands
 
 Analyze a file:
 
@@ -76,31 +62,38 @@ Analyze a file:
 logloom analyze build.log --output report.html
 ```
 
-Analyze piped output:
+Analyze output from another command:
 
 ```bash
 pytest 2>&1 | logloom analyze -
 ```
 
-Generate JSON for downstream tooling:
+Create JSON output for another tool:
 
 ```bash
-logloom analyze build.log --format json
+logloom analyze build.log --format json --output report.json
 ```
 
-Redact detected secrets in a report:
+Redact detected secrets in an HTML report:
 
 ```bash
 logloom analyze build.log --redact --output report.html
 ```
 
-For the full list of options, run:
+Useful options include:
 
-```bash
-logloom analyze --help
-```
+| Option | Purpose |
+|---|---|
+| `--output FILE` | Choose the report path. |
+| `--format html|json` | Select HTML or JSON output. |
+| `--redact` | Redact values matching supported secret patterns in the report. |
+| `--no-raw` | Omit the raw-output section from the HTML report. |
+| `--min-severity LEVEL` | Set the minimum displayed severity. |
+| `--fail-on never|warning|error` | Return a non-zero exit status when the chosen threshold is met. |
+| `--title TEXT` | Set the report title. |
+| `--quiet` | Suppress the CLI summary. |
 
-If running from the source checkout before installing the package, use `py -m logloom` on Windows or `python3 -m logloom` on Linux.
+Run `logloom analyze --help` for the complete list of supported arguments.
 
 ## How it works
 
@@ -110,49 +103,52 @@ flowchart TD
     B --> C["Normalize message signatures"]
     C --> D["Group repeated messages"]
     D --> E["Identify known patterns"]
-    E --> F["Detect and optionally redact secrets"]
-    F --> G["Generate standalone report"]
+    E --> F["Detect secrets and optionally redact"]
+    F --> G["Generate standalone HTML or JSON"]
     G --> H["Search, filter and inspect evidence"]
 ```
 
-Logloom is intended to help you find useful evidence faster, not to decide the root cause for you. Similar messages can have different causes, and the earliest error is not necessarily the cause of the failure.
+Logloom is intended to help you find relevant evidence faster, not to decide the root cause for you. Similar messages can have different causes, and the first error is not always the underlying cause.
 
-## Performance and testing
+## Privacy and security
 
-The project has **158 automated tests passing** in the current development snapshot. The test suite covers parsing, grouping, pattern detection, redaction, report generation, CLI behavior, and documentation checks.
+Logs can contain API keys, access tokens, internal hostnames, usernames, file paths, and other sensitive data.
 
-A development benchmark on a 100,000-line log reported approximately **3.6 seconds total** across parsing, analysis, secret detection, and rendering. Actual performance depends on log contents, hardware, and the report being generated; treat this as a reference measurement, not a universal guarantee.
+- Log processing happens locally.
+- Secret detection covers selected patterns only; it cannot guarantee that every sensitive value will be found.
+- Without `--redact`, the generated report may contain original secret values.
+- Redaction applies to detected patterns; it is not a guarantee that a report is safe to publish.
+- Review the generated report before sharing it.
+- Log content is untrusted input and should never be treated as executable instructions.
 
-Run the test suite locally:
+Use `--redact` when creating a report intended for review or sharing, and still inspect the result manually.
+
+## Performance and tests
+
+The current development snapshot has **158 automated tests passing**. Tests cover parsing, signature grouping, pattern detection, redaction, report generation, CLI behavior, and documentation consistency.
+
+A development benchmark on a 100,000-line log reported approximately **3.6 seconds** across parsing, analysis, secret detection, and report rendering. Results vary with hardware, input characteristics, and report size; this is a reference measurement, not a performance guarantee.
+
+To run the test suite from the project directory:
 
 ```bash
 python -m unittest discover
 ```
 
-## Security and privacy
-
-- Log processing is local; no cloud account or AI API is required.
-- Log content is untrusted input and must be treated carefully.
-- Reports generated without `--redact` can contain original sensitive values.
-- Secret detection can miss credentials and may occasionally flag harmless text.
-- Review reports before sharing them, even after redaction.
-
-If you discover a security issue, avoid posting real credentials or sensitive logs in a public issue. Contact the maintainer privately.
-
 ## Project status
 
-Logloom is an early-stage open-source project. Pattern coverage and output formats will evolve as it is tested against more real-world logs. The current goal is a dependable, transparent debugging aid—not automatic root-cause analysis.
+Logloom is an early-stage open-source developer tool. Pattern coverage and report behavior will continue to evolve as it is tested against more real-world logs.
 
-Useful contributions include:
+Contributions that are especially useful:
 
-- Minimal, sanitized log fixtures with expected findings.
+- Small, sanitized log fixtures with expected findings.
 - Parser improvements for build tools and test runners.
 - Cross-platform bug reports.
-- Security testing for HTML rendering and redaction.
+- Security tests for HTML rendering and redaction.
 - Documentation and usability improvements.
 
-When reporting a bug, include the smallest sanitized input that reproduces it. **Never attach production logs or credentials without removing sensitive data first.**
+When reporting a bug, include the smallest sanitized input that reproduces it. Do not upload production logs, credentials, or private data to public issues.
 
 ## License
 
-Logloom is released under the [MIT License](LICENSE).
+Released under the [MIT License](LICENSE).
