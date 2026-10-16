@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "logloom"
+version = "0.1.0"
+description = "Turn terminal chaos into a debugging report."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+keywords = ["logs", "cli", "debugging", "build", "devtools", "offline"]
+authors = [{ name = "Logloom contributors" }]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Debuggers",
+  "Topic :: Utilities",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/logloom/logloom"
+Issues = "https://github.com/logloom/logloom/issues"
+
+[project.scripts]
+logloom = "logloom.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["logloom"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"templates/report.html" = "logloom/templates/report.html"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/logloom",
+  "/tests",
+  "/examples",
+  "/docs",
+  "/bench.py",
+  "/.github",
+  "/README.md",
+  "/CONTRIBUTING.md",
+  "/SECURITY.md",
+  "/LICENSE",
+]
+
+# The wheel ships the template inside the package; the sdist must still contain
+# the source file or a rebuild from sdist would have nothing to copy.
+[tool.hatch.build.targets.sdist.force-include]
+"templates/report.html" = "templates/report.html"

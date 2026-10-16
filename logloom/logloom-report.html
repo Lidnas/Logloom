@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logloom report — stdin</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#14181f; --muted:#5b6472; --line:#e3e7ee;
+  --fatal:#b3122c; --error:#d1293d; --warning:#a86200; --info:#1668b3; --debug:#5b6472; --log:#4b5563;
+  --accent:#2f5fd0; --mark:#fff3bf; --mark-ink:#6a4b00; --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 16px rgba(16,24,40,.05);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1216; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4b2; --line:#242c37;
+    --fatal:#ff6b81; --error:#ff7b72; --warning:#e3b341; --info:#79c0ff; --debug:#9aa4b2; --log:#9aa4b2;
+    --accent:#7aa2f7; --mark:#4a3c00; --mark-ink:#ffe08a; --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 72px}
+header.top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+h1{font-size:22px;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.sub code{font-family:var(--mono)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.pads{padding:16px 18px}
+.banner{border-radius:12px;padding:12px 16px;margin-bottom:16px;border:1px solid;display:flex;gap:12px;align-items:flex-start;font-size:14px}
+.banner.warn{background:rgba(226,180,60,.12);border-color:rgba(226,180,60,.5)}
+.banner.ok{background:rgba(60,170,120,.10);border-color:rgba(60,170,120,.4)}
+.banner strong{white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin-bottom:18px}
+.stat{padding:12px 14px}
+.stat .n{font-size:22px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:2px}
+.toolbar{position:sticky;top:0;z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:var(--shadow)}
+input[type=search]{flex:1 1 240px;min-width:180px;padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:14px}
+input[type=search]:focus{outline:2px solid var(--accent);outline-offset:1px}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;cursor:pointer;user-select:none;background:var(--bg)}
+.chip input{margin:0;accent-color:var(--accent)}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+button{font:inherit;font-size:12px;padding:6px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--accent)}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:26px 0 10px}
+.groups{display:flex;flex-direction:column;gap:10px}
+details.group{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+details.group[hidden]{display:none}
+summary{cursor:pointer;padding:12px 15px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"\25B8";color:var(--muted);font-size:12px;transition:transform .12s ease}
+details[open]>summary::before{transform:rotate(90deg)}
+.sev{font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 7px;border-radius:5px;color:#fff;text-transform:uppercase;white-space:nowrap}
+.sev.fatal{background:var(--fatal)}.sev.error{background:var(--error)}.sev.warning{background:var(--warning)}
+.sev.info{background:var(--info)}.sev.debug{background:var(--debug)}.sev.log{background:var(--log)}
+.label{font-weight:600}
+.count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.loc{font-size:12px;color:var(--muted);margin-left:auto;font-family:var(--mono)}
+.body{padding:0 15px 14px;border-top:1px solid var(--line)}
+.msg{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin:12px 0;white-space:pre-wrap;word-break:break-word}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.tag{font-size:11px;font-family:var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+ol.occ{margin:10px 0 0;padding-left:22px;font-size:13px;color:var(--muted);columns:2}
+ol.occ li{font-family:var(--mono);break-inside:avoid}
+pre.ctx{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;margin:12px 0 0;white-space:pre;color:var(--muted)}
+mark.secret,.secret{background:var(--mark);color:var(--mark-ink);border-radius:3px;padding:0 2px}
+.secret{outline:1px dashed rgba(128,90,0,.5)}
+table.secrets{width:100%;border-collapse:collapse;font-size:13px}
+table.secrets th,table.secrets td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.secrets th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+table.secrets code{font-family:var(--mono);font-size:12px}
+.muted{color:var(--muted)}
+pre.raw{font-family:var(--mono);font-size:12px;line-height:1.5;margin:0;padding:12px 0;overflow-x:auto;max-height:70vh;overflow-y:auto}
+.rl{display:flex;gap:12px;padding:0 14px;border-left:3px solid transparent}
+.rl:hover{background:var(--bg)}
+.rl .ln{flex:0 0 58px;text-align:right;color:var(--muted);user-select:none;font-size:11px;padding-top:2px}
+.rl .tx{white-space:pre-wrap;word-break:break-word;flex:1;min-width:0}
+.rl[data-sev="fatal"],.rl[data-sev="error"]{border-left-color:var(--error)}
+.rl[data-sev="warning"]{border-left-color:var(--warning)}
+.rl[data-sev="info"]{border-left-color:var(--info)}
+.rl[data-sev="blank"],.rl[data-sev="noise"],.rl[data-sev="header"]{opacity:.55}
+.rl[hidden]{display:none}
+footer{margin-top:34px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+footer a{color:var(--accent)}
+.noscript{margin-top:12px;font-size:13px;color:var(--muted)}
+.empty{padding:22px;text-align:center;color:var(--muted);font-size:14px}
+@media print{.toolbar{display:none}details.group{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Logloom report — stdin</h1>
+      <div class="sub">source <code>stdin</code> &middot; generated 2026-10-16 22:51:43 by Logloom 0.1.0</div>
+    </div>
+    <div class="sub">73 lines analysed</div>
+  </header>
+
+  <div class="banner ok"><strong>Redacted copy.</strong><span>4 potential secret(s) replaced with markers. The raw output below is already scrubbed; the original log file is untouched.</span></div>
+
+  <div class="stats"><div class="stat card"><div class="n">73</div><div class="k">Lines</div></div><div class="stat card"><div class="n">23</div><div class="k">Findings</div></div><div class="stat card"><div class="n">17</div><div class="k">Errors</div></div><div class="stat card"><div class="n">6</div><div class="k">Warnings</div></div><div class="stat card"><div class="n">0</div><div class="k">Duplicates folded</div></div><div class="stat card"><div class="n">25</div><div class="k">Stack frames</div></div><div class="stat card"><div class="n">2</div><div class="k">Noise lines</div></div><div class="stat card"><div class="n">4</div><div class="k">Blank lines</div></div><div class="stat card"><div class="n">16</div><div class="k">First error at line</div></div></div>
+
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="Search messages, files, signatures&hellip;" aria-label="Search report">
+    <div class="filters" id="filters"></div>
+    <button type="button" id="toggle-all">Collapse all</button>
+    <button type="button" id="toggle-raw">Hide raw output</button>
+    
+    <button type="button" id="download">Download this view</button>
+  </div>
+
+  <h2>Findings <span class="muted" id="visible-count"></span></h2>
+  <div class="groups" id="groups"><details class="group" data-severity="fatal" data-signature="44d196c07908" data-search="not a git repository (or any of the parent directories): .git 44d196c07908 line 72 fatal: not a git repository (or any of the parent directories): .git"><summary><span class="sev fatal">Fatal</span><span class="label">not a git repository (or any of the parent directories): .git</span><span class="count">× 1</span><span class="loc">line 72</span></summary><div class="body"><div class="msg">fatal: not a git repository (or any of the parent directories): .git</div></div></details><details class="group" data-severity="error" data-signature="ab58083e5114" data-search="test failure ab58083e5114 line 16 error[e0433]: failed to resolve: use of undeclared crate or module `tokio_util`  --&gt; src/transport.rs:19:5   |"><summary><span class="sev error">Error</span><span class="label">Test failure</span><span class="count">× 1</span><span class="loc">line 16</span></summary><div class="body"><div class="msg">error[E0433]: failed to resolve: use of undeclared crate or module `tokio_util`</div><pre class="ctx">    17  --&gt; src/transport.rs:19:5
+    18  |</pre></div></details><details class="group" data-severity="error" data-signature="807b671e8d57" data-search="[e0425]: cannot find value &lt;str&gt; in this scope 807b671e8d57 line 24 error[e0425]: cannot find value `config` in this scope   --&gt; src/transport.rs:27:20    |"><summary><span class="sev error">Error</span><span class="label">[E0425]: cannot find value &lt;str&gt; in this scope</span><span class="count">× 1</span><span class="loc">line 24</span></summary><div class="body"><div class="msg">error[E0425]: cannot find value `config` in this scope</div><pre class="ctx">    25  --&gt; src/transport.rs:27:20
+    26  |</pre></div></details><details class="group" data-severity="error" data-signature="225ace76a503" data-search="[e0277]: the trait bound &lt;str&gt; is not satisfied 225ace76a503 line 30 error[e0277]: the trait bound `request: std::fmt::display` is not satisfied    --&gt; src/transport.rs:41:36    |"><summary><span class="sev error">Error</span><span class="label">[E0277]: the trait bound &lt;str&gt; is not satisfied</span><span class="count">× 1</span><span class="loc">line 30</span></summary><div class="body"><div class="msg">error[E0277]: the trait bound `Request: std::fmt::Display` is not satisfied</div><pre class="ctx">    31  --&gt; src/transport.rs:41:36
+    32  |</pre></div></details><details class="group" data-severity="error" data-signature="53208a95b253" data-search="could not compile &lt;str&gt; (lib) due to &lt;n&gt; previous errors; &lt;n&gt; warning... 53208a95b253 line 37 error: could not compile `logloom` (lib) due to 3 previous errors; 1 warning emitted"><summary><span class="sev error">Error</span><span class="label">could not compile &lt;str&gt; (lib) due to &lt;n&gt; previous errors; &lt;n&gt; warning...</span><span class="count">× 1</span><span class="loc">line 37</span></summary><div class="body"><div class="msg">error: could not compile `logloom` (lib) due to 3 previous errors; 1 warning emitted</div></div></details><details class="group" data-severity="error" data-signature="521b334079ae" data-search="test failure 521b334079ae line 46 npm err! network registry request to https://registry.npmjs.org/vite failed, reason: read econnreset"><summary><span class="sev error">Error</span><span class="label">Test failure</span><span class="count">× 1</span><span class="loc">line 46</span></summary><div class="body"><div class="msg">npm ERR! Network registry request to https://registry.npmjs.org/vite failed, reason: read ECONNRESET</div></div></details><details class="group" data-severity="error" data-signature="9c6a49905d12" data-search="test failure 9c6a49905d12 line 47 [10:22:41.103] [error] (web:1420): failed to load env: error: enoent: no such file or directory, open &#x27;/home/dev/project/.env.production&#x27;"><summary><span class="sev error">Error</span><span class="label">Test failure</span><span class="count">× 1</span><span class="loc">line 47</span></summary><div class="body"><div class="msg">[10:22:41.103] [ERROR] (web:1420): Failed to load env: Error: ENOENT: no such file or directory, open &#x27;/home/dev/project/.env.production&#x27;</div></div></details><details class="group" data-severity="error" data-signature="23a652e67074" data-search="(web:&lt;n&gt;): error during build: 23a652e67074 line 50 [10:22:41.512] [error] (web:1420): error during build:"><summary><span class="sev error">Error</span><span class="label">(web:&lt;n&gt;): error during build:</span><span class="count">× 1</span><span class="loc">line 50</span></summary><div class="body"><div class="msg">[10:22:41.512] [ERROR] (web:1420): error during build:</div></div></details><details class="group" data-severity="error" data-signature="15d1945ac39e" data-search="test failure 15d1945ac39e line 51 [10:22:41.513] [error] (web:1420): error: build failed with 1 error:"><summary><span class="sev error">Error</span><span class="label">Test failure</span><span class="count">× 1</span><span class="loc">line 51</span></summary><div class="body"><div class="msg">[10:22:41.513] [ERROR] (web:1420): Error: Build failed with 1 error:</div></div></details><details class="group" data-severity="error" data-signature="20d5166611b8" data-search="(web:&lt;n&gt;): error: could not resolve &lt;str&gt; from &lt;str&gt; 20d5166611b8 line 52 [10:22:41.514] [error] (web:1420): error: could not resolve &quot;./routes/missing.ts&quot; from &quot;src/main.ts&quot;"><summary><span class="sev error">Error</span><span class="label">(web:&lt;n&gt;): error: Could not resolve &lt;str&gt; from &lt;str&gt;</span><span class="count">× 1</span><span class="loc">line 52</span></summary><div class="body"><div class="msg">[10:22:41.514] [ERROR] (web:1420): error: Could not resolve &quot;./routes/missing.ts&quot; from &quot;src/main.ts&quot;</div></div></details><details class="group" data-severity="error" data-signature="dd3582fe65c0" data-search="test failure dd3582fe65c0 line 53 [10:22:41.601] [info ] (web:1420): elifecycle  command failed with exit code 1."><summary><span class="sev error">Error</span><span class="label">Test failure</span><span class="count">× 1</span><span class="loc">line 53</span></summary><div class="body"><div class="msg">[10:22:41.601] [INFO ] (web:1420): ELIFECYCLE  Command failed with exit code 1.</div></div></details><details class="group" data-severity="error" data-signature="1b5abafe5c12" data-search="test failure 1b5abafe5c12 line 54 w0910 10:22:42.001  3301 build.rs:77] failed to read cargo.lock cache entry"><summary><span class="sev error">Error</span><span class="label">Test failure</span><span class="count">× 1</span><span class="loc">line 54</span></summary><div class="body"><div class="msg">W0910 10:22:42.001  3301 build.rs:77] failed to read Cargo.lock cache entry</div></div></details><details class="group" data-severity="error" data-signature="734a657bca29" data-search="test failure 734a657bca29 line 55 e0910 10:22:42.220  3301 build.rs:91] failed to acquire lock on target directory: resource temporarily unavailable"><summary><span class="sev error">Error</span><span class="label">Test failure</span><span class="count">× 1</span><span class="loc">line 55</span></summary><div class="body"><div class="msg">E0910 10:22:42.220  3301 build.rs:91] failed to acquire lock on target directory: Resource temporarily unavailable</div></div></details><details class="group" data-severity="error" data-signature="4f7d992fb9e5" data-search="test failure 4f7d992fb9e5 line 61 failed tests/integration/test_docker.py::test_image_builds - docker image build failed traceback (most recent call last):   file &quot;/usr/lib/python3/dist-packages/click/core.py&quot;, line 1232, in invoke     return ctx.invoke(self.callback, **ctx.params)   file &quot;/usr/lib/python3/dist-packages/click/core.py&quot;, line 1054, in invoke     return __self__.callback(*args, **kwargs)"><summary><span class="sev error">Error</span><span class="label">Test failure</span><span class="count">× 1</span><span class="loc">line 61</span></summary><div class="body"><div class="msg">FAILED tests/integration/test_docker.py::test_image_builds - docker image build failed</div><pre class="ctx">    62  Traceback (most recent call last):
+    63  File &quot;/usr/lib/python3/dist-packages/click/core.py&quot;, line 1232, in invoke
+    64  return ctx.invoke(self.callback, **ctx.params)
+    65  File &quot;/usr/lib/python3/dist-packages/click/core.py&quot;, line 1054, in invoke
+    66  return __self__.callback(*args, **kwargs)</pre></div></details><details class="group" data-severity="error" data-signature="c064fb86c150" data-search="test failure c064fb86c150 line 68 error: build step failed: command &#x27;poetry build&#x27; exited with 2"><summary><span class="sev error">Error</span><span class="label">Test failure</span><span class="count">× 1</span><span class="loc">line 68</span></summary><div class="body"><div class="msg">ERROR: build step failed: command &#x27;poetry build&#x27; exited with 2</div></div></details><details class="group" data-severity="error" data-signature="07ccf03a2225" data-search="test failure 07ccf03a2225 line 69 build step failed"><summary><span class="sev error">Error</span><span class="label">Test failure</span><span class="count">× 1</span><span class="loc">line 69</span></summary><div class="body"><div class="msg">Build step failed</div></div></details><details class="group" data-severity="error" data-signature="22226ef0c1e1" data-search="the process &lt;str&gt; aborted with exit code &lt;n&gt; 22226ef0c1e1 line 73 error: the process &#x27;/usr/bin/docker&#x27; aborted with exit code 1"><summary><span class="sev error">Error</span><span class="label">The process &lt;str&gt; aborted with exit code &lt;n&gt;</span><span class="count">× 1</span><span class="loc">line 73</span></summary><div class="body"><div class="msg">Error: The process &#x27;/usr/bin/docker&#x27; aborted with exit code 1</div></div></details><details class="group" data-severity="warning" data-signature="c8e0b2f890df" data-search="unused variable: &lt;str&gt; c8e0b2f890df line 5 warning: unused variable: `ctx`    --&gt; src/server.rs:142:9     |"><summary><span class="sev warning">Warning</span><span class="label">unused variable: &lt;str&gt;</span><span class="count">× 1</span><span class="loc">line 5</span></summary><div class="body"><div class="msg">warning: unused variable: `ctx`</div><pre class="ctx">     6  --&gt; src/server.rs:142:9
+     7  |</pre></div></details><details class="group" data-severity="warning" data-signature="39b4195c6a38" data-search="field &lt;str&gt; is never read 39b4195c6a38 line 12 warning: field `retries` is never read    --&gt; src/client.rs:88:5"><summary><span class="sev warning">Warning</span><span class="label">field &lt;str&gt; is never read</span><span class="count">× 1</span><span class="loc">line 12</span></summary><div class="body"><div class="msg">warning: field `retries` is never read</div><pre class="ctx">    13  --&gt; src/client.rs:88:5</pre></div></details><details class="group" data-severity="warning" data-signature="835243a1b48a" data-search="&lt;n&gt; warnings emitted 835243a1b48a line 14 warning: 3 warnings emitted"><summary><span class="sev warning">Warning</span><span class="label">&lt;n&gt; warnings emitted</span><span class="count">× 1</span><span class="loc">line 14</span></summary><div class="body"><div class="msg">warning: 3 warnings emitted</div></div></details><details class="group" data-severity="warning" data-signature="b7860a194a0c" data-search="deprecation b7860a194a0c line 38 npm warn deprecated [redacted:email]: request has been deprecated, see https://github.com/request/request/issues/3142"><summary><span class="sev warning">Warning</span><span class="label">Deprecation</span><span class="count">× 1</span><span class="loc">line 38</span></summary><div class="body"><div class="msg">npm WARN deprecated <span class="secret" data-rule="email" data-redacted="[REDACTED:email]">[REDACTED:email]</span>: request has been deprecated, see https://github.com/request/request/issues/3142</div></div></details><details class="group" data-severity="warning" data-signature="e3a4b7ef2b6f" data-search="deprecation e3a4b7ef2b6f line 39 npm warn deprecated [redacted:email]: tough-cookie has been deprecated"><summary><span class="sev warning">Warning</span><span class="label">Deprecation</span><span class="count">× 1</span><span class="loc">line 39</span></summary><div class="body"><div class="msg">npm WARN deprecated <span class="secret" data-rule="email" data-redacted="[REDACTED:email]">[REDACTED:email]</span>: tough-cookie has been deprecated</div></div></details><details class="group" data-severity="warning" data-signature="b5af4d9a8eee" data-search="(web:&lt;n&gt;): vite v5.&lt;n&gt; b5af4d9a8eee line 48 [10:22:41.140] [warn ] (web:1420): vite v5.0.12"><summary><span class="sev warning">Warning</span><span class="label">(web:&lt;n&gt;): Vite v5.&lt;n&gt;</span><span class="count">× 1</span><span class="loc">line 48</span></summary><div class="body"><div class="msg">[10:22:41.140] [WARN ] (web:1420): Vite v5.0.12</div></div></details></div>
+  <noscript><p class="noscript">JavaScript is disabled, so search and filters are unavailable. All grouped findings and the full raw output below are still rendered.</p></noscript>
+
+  <h2>Potential secrets</h2><div class="card pads"><p class="muted" style="margin-top:0">4 candidate(s) detected. Toggle individual findings, then use the toolbar to hide them in the view or export a redacted copy. The original log on disk is never modified.</p><table class="secrets"><thead><tr><th>Redact</th><th>Replacement</th><th>Rule</th><th>Confidence</th><th>Where</th><th>Preview</th></tr></thead><tbody><tr><td><input type="checkbox" id="sec-0" data-line="38" data-start="20" data-end="34" data-marker="[REDACTED:email]" checked></td><td><code>[REDACTED:email]</code></td><td>Email address (often harmless, left for review)</td><td>low</td><td>line 38</td><td><code>requ...88.2 (14 chars)</code></td></tr><tr><td><input type="checkbox" id="sec-1" data-line="39" data-start="20" data-end="38" data-marker="[REDACTED:email]" checked></td><td><code>[REDACTED:email]</code></td><td>Email address (often harmless, left for review)</td><td>low</td><td>line 39</td><td><code>toug....1.3 (18 chars)</code></td></tr><tr><td><input type="checkbox" id="sec-2" data-line="42" data-start="18" data-end="27" data-marker="[REDACTED:email]" checked></td><td><code>[REDACTED:email]</code></td><td>Email address (often harmless, left for review)</td><td>low</td><td>line 42</td><td><code>w********</code></td></tr><tr><td><input type="checkbox" id="sec-3" data-line="44" data-start="11" data-end="24" data-marker="[REDACTED:email]" checked></td><td><code>[REDACTED:email]</code></td><td>Email address (often harmless, left for review)</td><td>low</td><td>line 44</td><td><code>logl....1.0 (13 chars)</code></td></tr></tbody></table></div>
+
+  <h2 id="raw-heading">Raw output</h2>
+  <div class="card pads" id="raw-wrap" style="padding:0 4px"><pre class="raw" id="raw"><div class="rl" data-ln="1" data-sev="log" data-kind="noise" data-search="compiling logloom v0.1.0 (/home/dev/project)"><span class="ln">1</span><span class="tx">Compiling logloom v0.1.0 (/home/dev/project)</span></div><div class="rl" data-ln="2" data-sev="log" data-kind="trace" data-search="   compiling serde v1.0.197"><span class="ln">2</span><span class="tx">   Compiling serde v1.0.197</span></div><div class="rl" data-ln="3" data-sev="log" data-kind="trace" data-search="   compiling tokio v1.35.1"><span class="ln">3</span><span class="tx">   Compiling tokio v1.35.1</span></div><div class="rl" data-ln="4" data-sev="log" data-kind="trace" data-search="   compiling hyper v0.27.2"><span class="ln">4</span><span class="tx">   Compiling hyper v0.27.2</span></div><div class="rl" data-ln="5" data-sev="warning" data-kind="warning" data-search="warning: unused variable: `ctx`"><span class="ln">5</span><span class="tx">warning: unused variable: `ctx`</span></div><div class="rl" data-ln="6" data-sev="log" data-kind="trace" data-search="   --&gt; src/server.rs:142:9"><span class="ln">6</span><span class="tx">   --&gt; src/server.rs:142:9</span></div><div class="rl" data-ln="7" data-sev="log" data-kind="trace" data-search="    |"><span class="ln">7</span><span class="tx">    |</span></div><div class="rl" data-ln="8" data-sev="log" data-kind="log" data-search="142 |     let ctx = build_context(&amp;config);"><span class="ln">8</span><span class="tx">142 |     let ctx = build_context(&amp;config);</span></div><div class="rl" data-ln="9" data-sev="log" data-kind="trace" data-search="    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`"><span class="ln">9</span><span class="tx">    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`</span></div><div class="rl" data-ln="10" data-sev="log" data-kind="trace" data-search="    |"><span class="ln">10</span><span class="tx">    |</span></div><div class="rl" data-ln="11" data-sev="log" data-kind="trace" data-search="    = warning: `logloom::server` (lib) generated 1 warning"><span class="ln">11</span><span class="tx">    = warning: `logloom::server` (lib) generated 1 warning</span></div><div class="rl" data-ln="12" data-sev="warning" data-kind="warning" data-search="warning: field `retries` is never read"><span class="ln">12</span><span class="tx">warning: field `retries` is never read</span></div><div class="rl" data-ln="13" data-sev="log" data-kind="trace" data-search="   --&gt; src/client.rs:88:5"><span class="ln">13</span><span class="tx">   --&gt; src/client.rs:88:5</span></div><div class="rl" data-ln="14" data-sev="warning" data-kind="warning" data-search="warning: 3 warnings emitted"><span class="ln">14</span><span class="tx">warning: 3 warnings emitted</span></div><div class="rl" data-ln="15" data-sev="log" data-kind="blank" data-search=""><span class="ln">15</span><span class="tx"></span></div><div class="rl" data-ln="16" data-sev="error" data-kind="error" data-search="error[e0433]: failed to resolve: use of undeclared crate or module `tokio_util`"><span class="ln">16</span><span class="tx">error[E0433]: failed to resolve: use of undeclared crate or module `tokio_util`</span></div><div class="rl" data-ln="17" data-sev="log" data-kind="trace" data-search=" --&gt; src/transport.rs:19:5"><span class="ln">17</span><span class="tx"> --&gt; src/transport.rs:19:5</span></div><div class="rl" data-ln="18" data-sev="log" data-kind="trace" data-search="  |"><span class="ln">18</span><span class="tx">  |</span></div><div class="rl" data-ln="19" data-sev="log" data-kind="log" data-search="19 | use tokio_util::codec::framedread;"><span class="ln">19</span><span class="tx">19 | use tokio_util::codec::FramedRead;</span></div><div class="rl" data-ln="20" data-sev="log" data-kind="trace" data-search="  |     ^^^^^^ help: you may be missing a crate"><span class="ln">20</span><span class="tx">  |     ^^^^^^ help: you may be missing a crate</span></div><div class="rl" data-ln="21" data-sev="log" data-kind="trace" data-search="  |"><span class="ln">21</span><span class="tx">  |</span></div><div class="rl" data-ln="22" data-sev="log" data-kind="trace" data-search="  = help: if you wanted to use a crate named `tokio_util`, use `cargo add tokio_util`"><span class="ln">22</span><span class="tx">  = help: if you wanted to use a crate named `tokio_util`, use `cargo add tokio_util`</span></div><div class="rl" data-ln="23" data-sev="log" data-kind="blank" data-search=""><span class="ln">23</span><span class="tx"></span></div><div class="rl" data-ln="24" data-sev="error" data-kind="error" data-search="error[e0425]: cannot find value `config` in this scope"><span class="ln">24</span><span class="tx">error[E0425]: cannot find value `config` in this scope</span></div><div class="rl" data-ln="25" data-sev="log" data-kind="trace" data-search="  --&gt; src/transport.rs:27:20"><span class="ln">25</span><span class="tx">  --&gt; src/transport.rs:27:20</span></div><div class="rl" data-ln="26" data-sev="log" data-kind="trace" data-search="   |"><span class="ln">26</span><span class="tx">   |</span></div><div class="rl" data-ln="27" data-sev="log" data-kind="log" data-search="27 |     let settings = config.settings();"><span class="ln">27</span><span class="tx">27 |     let settings = config.settings();</span></div><div class="rl" data-ln="28" data-sev="log" data-kind="trace" data-search="   |                   ^^^^^^^ not found in this scope"><span class="ln">28</span><span class="tx">   |                   ^^^^^^^ not found in this scope</span></div><div class="rl" data-ln="29" data-sev="log" data-kind="blank" data-search=""><span class="ln">29</span><span class="tx"></span></div><div class="rl" data-ln="30" data-sev="error" data-kind="error" data-search="error[e0277]: the trait bound `request: std::fmt::display` is not satisfied"><span class="ln">30</span><span class="tx">error[E0277]: the trait bound `Request: std::fmt::Display` is not satisfied</span></div><div class="rl" data-ln="31" data-sev="log" data-kind="trace" data-search="   --&gt; src/transport.rs:41:36"><span class="ln">31</span><span class="tx">   --&gt; src/transport.rs:41:36</span></div><div class="rl" data-ln="32" data-sev="log" data-kind="trace" data-search="   |"><span class="ln">32</span><span class="tx">   |</span></div><div class="rl" data-ln="33" data-sev="log" data-kind="log" data-search="41 |     println!(&quot;{}&quot;, request);"><span class="ln">33</span><span class="tx">41 |     println!(&quot;{}&quot;, request);</span></div><div class="rl" data-ln="34" data-sev="log" data-kind="trace" data-search="   |                         ^^^^^^^ `request` cannot be formatted with the default formatter"><span class="ln">34</span><span class="tx">   |                         ^^^^^^^ `Request` cannot be formatted with the default formatter</span></div><div class="rl" data-ln="35" data-sev="log" data-kind="blank" data-search=""><span class="ln">35</span><span class="tx"></span></div><div class="rl" data-ln="36" data-sev="log" data-kind="log" data-search="for more information about this error, try `cargo check --message-format=json`."><span class="ln">36</span><span class="tx">For more information about this error, try `cargo check --message-format=json`.</span></div><div class="rl" data-ln="37" data-sev="error" data-kind="error" data-search="error: could not compile `logloom` (lib) due to 3 previous errors; 1 warning emitted"><span class="ln">37</span><span class="tx">error: could not compile `logloom` (lib) due to 3 previous errors; 1 warning emitted</span></div><div class="rl" data-ln="38" data-sev="log" data-kind="log" data-search="npm warn deprecated [redacted:email]: request has been deprecated, see https://github.com/request/request/issues/3142"><span class="ln">38</span><span class="tx">npm WARN deprecated <span class="secret" data-rule="email" data-redacted="[REDACTED:email]">[REDACTED:email]</span>: request has been deprecated, see https://github.com/request/request/issues/3142</span></div><div class="rl" data-ln="39" data-sev="log" data-kind="log" data-search="npm warn deprecated [redacted:email]: tough-cookie has been deprecated"><span class="ln">39</span><span class="tx">npm WARN deprecated <span class="secret" data-rule="email" data-redacted="[REDACTED:email]">[REDACTED:email]</span>: tough-cookie has been deprecated</span></div><div class="rl" data-ln="40" data-sev="log" data-kind="log" data-search="npm err! code elifecycle"><span class="ln">40</span><span class="tx">npm ERR! code ELIFECYCLE</span></div><div class="rl" data-ln="41" data-sev="log" data-kind="log" data-search="npm err! errno 1"><span class="ln">41</span><span class="tx">npm ERR! errno 1</span></div><div class="rl" data-ln="42" data-sev="log" data-kind="log" data-search="npm err! @logloom/[redacted:email] build: `vite build`"><span class="ln">42</span><span class="tx">npm ERR! @logloom/<span class="secret" data-rule="email" data-redacted="[REDACTED:email]">[REDACTED:email]</span> build: `vite build`</span></div><div class="rl" data-ln="43" data-sev="log" data-kind="log" data-search="npm err! exit status 1"><span class="ln">43</span><span class="tx">npm ERR! Exit status 1</span></div><div class="rl" data-ln="44" data-sev="log" data-kind="log" data-search="npm err!   [redacted:email] dev"><span class="ln">44</span><span class="tx">npm ERR!   <span class="secret" data-rule="email" data-redacted="[REDACTED:email]">[REDACTED:email]</span> dev</span></div><div class="rl" data-ln="45" data-sev="log" data-kind="log" data-search="npm err!   `--mode production` was not specified"><span class="ln">45</span><span class="tx">npm ERR!   `--mode production` was not specified</span></div><div class="rl" data-ln="46" data-sev="log" data-kind="log" data-search="npm err! network registry request to https://registry.npmjs.org/vite failed, reason: read econnreset"><span class="ln">46</span><span class="tx">npm ERR! Network registry request to https://registry.npmjs.org/vite failed, reason: read ECONNRESET</span></div><div class="rl" data-ln="47" data-sev="error" data-kind="error" data-search="[10:22:41.103] [error] (web:1420): failed to load env: error: enoent: no such file or directory, open &#x27;/home/dev/project/.env.production&#x27;"><span class="ln">47</span><span class="tx">[10:22:41.103] [ERROR] (web:1420): Failed to load env: Error: ENOENT: no such file or directory, open &#x27;/home/dev/project/.env.production&#x27;</span></div><div class="rl" data-ln="48" data-sev="warning" data-kind="warning" data-search="[10:22:41.140] [warn ] (web:1420): vite v5.0.12"><span class="ln">48</span><span class="tx">[10:22:41.140] [WARN ] (web:1420): Vite v5.0.12</span></div><div class="rl" data-ln="49" data-sev="info" data-kind="info" data-search="[10:22:41.141] [info ] (web:1420): building for production..."><span class="ln">49</span><span class="tx">[10:22:41.141] [INFO ] (web:1420): building for production...</span></div><div class="rl" data-ln="50" data-sev="error" data-kind="error" data-search="[10:22:41.512] [error] (web:1420): error during build:"><span class="ln">50</span><span class="tx">[10:22:41.512] [ERROR] (web:1420): error during build:</span></div><div class="rl" data-ln="51" data-sev="error" data-kind="error" data-search="[10:22:41.513] [error] (web:1420): error: build failed with 1 error:"><span class="ln">51</span><span class="tx">[10:22:41.513] [ERROR] (web:1420): Error: Build failed with 1 error:</span></div><div class="rl" data-ln="52" data-sev="error" data-kind="error" data-search="[10:22:41.514] [error] (web:1420): error: could not resolve &quot;./routes/missing.ts&quot; from &quot;src/main.ts&quot;"><span class="ln">52</span><span class="tx">[10:22:41.514] [ERROR] (web:1420): error: Could not resolve &quot;./routes/missing.ts&quot; from &quot;src/main.ts&quot;</span></div><div class="rl" data-ln="53" data-sev="info" data-kind="info" data-search="[10:22:41.601] [info ] (web:1420): elifecycle  command failed with exit code 1."><span class="ln">53</span><span class="tx">[10:22:41.601] [INFO ] (web:1420): ELIFECYCLE  Command failed with exit code 1.</span></div><div class="rl" data-ln="54" data-sev="warning" data-kind="warning" data-search="w0910 10:22:42.001  3301 build.rs:77] failed to read cargo.lock cache entry"><span class="ln">54</span><span class="tx">W0910 10:22:42.001  3301 build.rs:77] failed to read Cargo.lock cache entry</span></div><div class="rl" data-ln="55" data-sev="error" data-kind="error" data-search="e0910 10:22:42.220  3301 build.rs:91] failed to acquire lock on target directory: resource temporarily unavailable"><span class="ln">55</span><span class="tx">E0910 10:22:42.220  3301 build.rs:91] failed to acquire lock on target directory: Resource temporarily unavailable</span></div><div class="rl" data-ln="56" data-sev="log" data-kind="log" data-search="d0910 10:22:42.880  3301 build.rs:92] finished `dev` profile [unoptimized + debuginfo] target(s) in 1.84s"><span class="ln">56</span><span class="tx">D0910 10:22:42.880  3301 build.rs:92] finished `dev` profile [unoptimized + debuginfo] target(s) in 1.84s</span></div><div class="rl" data-ln="57" data-sev="log" data-kind="log" data-search="cache entry for key `deps/liblogloom` invalidated: file changed on disk"><span class="ln">57</span><span class="tx">Cache entry for key `deps/liblogloom` invalidated: file changed on disk</span></div><div class="rl" data-ln="58" data-sev="log" data-kind="log" data-search="make[1]: *** [makefile:42: build] error 2"><span class="ln">58</span><span class="tx">make[1]: *** [Makefile:42: build] Error 2</span></div><div class="rl" data-ln="59" data-sev="log" data-kind="log" data-search="make: *** [makefile:17: all] error 2"><span class="ln">59</span><span class="tx">make: *** [Makefile:17: all] Error 2</span></div><div class="rl" data-ln="60" data-sev="log" data-kind="log" data-search="docker: error response from daemon: could not select image: no match for &quot;logloom:0.1.0&quot;."><span class="ln">60</span><span class="tx">docker: Error response from daemon: could not select image: no match for &quot;logloom:0.1.0&quot;.</span></div><div class="rl" data-ln="61" data-sev="error" data-kind="error" data-search="failed tests/integration/test_docker.py::test_image_builds - docker image build failed"><span class="ln">61</span><span class="tx">FAILED tests/integration/test_docker.py::test_image_builds - docker image build failed</span></div><div class="rl" data-ln="62" data-sev="log" data-kind="trace" data-search="traceback (most recent call last):"><span class="ln">62</span><span class="tx">Traceback (most recent call last):</span></div><div class="rl" data-ln="63" data-sev="log" data-kind="trace" data-search="  file &quot;/usr/lib/python3/dist-packages/click/core.py&quot;, line 1232, in invoke"><span class="ln">63</span><span class="tx">  File &quot;/usr/lib/python3/dist-packages/click/core.py&quot;, line 1232, in invoke</span></div><div class="rl" data-ln="64" data-sev="log" data-kind="trace" data-search="    return ctx.invoke(self.callback, **ctx.params)"><span class="ln">64</span><span class="tx">    return ctx.invoke(self.callback, **ctx.params)</span></div><div class="rl" data-ln="65" data-sev="log" data-kind="trace" data-search="  file &quot;/usr/lib/python3/dist-packages/click/core.py&quot;, line 1054, in invoke"><span class="ln">65</span><span class="tx">  File &quot;/usr/lib/python3/dist-packages/click/core.py&quot;, line 1054, in invoke</span></div><div class="rl" data-ln="66" data-sev="log" data-kind="trace" data-search="    return __self__.callback(*args, **kwargs)"><span class="ln">66</span><span class="tx">    return __self__.callback(*args, **kwargs)</span></div><div class="rl" data-ln="67" data-sev="log" data-kind="log" data-search="click.exceptions.usageerror: missing option &#x27;--config&#x27;."><span class="ln">67</span><span class="tx">click.exceptions.UsageError: Missing option &#x27;--config&#x27;.</span></div><div class="rl" data-ln="68" data-sev="error" data-kind="error" data-search="error: build step failed: command &#x27;poetry build&#x27; exited with 2"><span class="ln">68</span><span class="tx">ERROR: build step failed: command &#x27;poetry build&#x27; exited with 2</span></div><div class="rl" data-ln="69" data-sev="log" data-kind="log" data-search="build step failed"><span class="ln">69</span><span class="tx">Build step failed</span></div><div class="rl" data-ln="70" data-sev="log" data-kind="noise" data-search="done in 6.42s"><span class="ln">70</span><span class="tx">Done in 6.42s</span></div><div class="rl" data-ln="71" data-sev="log" data-kind="log" data-search="subprocess.calledprocesserror: return code 1"><span class="ln">71</span><span class="tx">subprocess.CalledProcessError: return code 1</span></div><div class="rl" data-ln="72" data-sev="fatal" data-kind="fatal" data-search="fatal: not a git repository (or any of the parent directories): .git"><span class="ln">72</span><span class="tx">fatal: not a git repository (or any of the parent directories): .git</span></div><div class="rl" data-ln="73" data-sev="error" data-kind="error" data-search="error: the process &#x27;/usr/bin/docker&#x27; aborted with exit code 1"><span class="ln">73</span><span class="tx">Error: The process &#x27;/usr/bin/docker&#x27; aborted with exit code 1</span></div></pre></div>
+
+  <footer>
+    Logloom organises evidence; it does not claim to identify the root cause.
+    Every finding links back to the original line numbers, and the raw output above is unmodified.
+  </footer>
+</div>
+<script>
+(function () {
+  var q = document.getElementById('q');
+  var groups = [].slice.call(document.querySelectorAll('details.group'));
+  var filters = document.getElementById('filters');
+  var raw = document.getElementById('raw');
+  var rawLines = [].slice.call(raw.querySelectorAll('.rl'));
+  var visibleCount = document.getElementById('visible-count');
+
+  var severities = {};
+  groups.forEach(function (g) { severities[g.dataset.severity] = (severities[g.dataset.severity] || 0) + 1; });
+  var order = ['fatal', 'error', 'warning', 'info', 'debug', 'log'];
+  order.forEach(function (sev) {
+    if (!severities[sev]) return;
+    var label = document.createElement('label');
+    label.className = 'chip';
+    label.innerHTML = '<input type="checkbox" value="' + sev + '" checked><span class="dot" style="background:var(--' + sev + ')"></span>' + sev + ' (' + severities[sev] + ')';
+    filters.appendChild(label);
+  });
+
+  function activeSeverities() {
+    var out = [];
+    [].slice.call(filters.querySelectorAll('input')).forEach(function (i) { if (i.checked) out.push(i.value); });
+    return out;
+  }
+
+  function apply() {
+    var term = (q.value || '').toLowerCase().trim();
+    var sevs = activeSeverities();
+    var shown = 0;
+    groups.forEach(function (g) {
+      var okSev = sevs.indexOf(g.dataset.severity) !== -1;
+      var okTerm = !term || g.dataset.search.indexOf(term) !== -1;
+      var visible = okSev && okTerm;
+      g.hidden = !visible;
+      if (visible) shown++;
+    });
+    visibleCount.textContent = shown === groups.length ? '' : '(' + shown + ' of ' + groups.length + ')';
+    rawLines.forEach(function (row) {
+      row.hidden = !!term && row.dataset.search.indexOf(term) === -1;
+    });
+  }
+
+  q.addEventListener('input', apply);
+  filters.addEventListener('change', apply);
+  apply();
+
+  document.getElementById('toggle-all').addEventListener('click', function () {
+    var anyClosed = groups.some(function (g) { return !g.hidden && !g.open; });
+    groups.forEach(function (g) { if (!g.hidden) g.open = anyClosed; });
+    this.textContent = anyClosed ? 'Collapse all' : 'Expand all';
+  });
+
+  document.getElementById('toggle-raw').addEventListener('click', function () {
+    var wrap = document.getElementById('raw-wrap');
+    wrap.hidden = !wrap.hidden;
+    this.textContent = wrap.hidden ? 'Show raw output' : 'Hide raw output';
+  });
+
+  var redact = document.getElementById('redact');
+  if (redact) {
+    redact.addEventListener('change', function () {
+      [].slice.call(document.querySelectorAll('.secret')).forEach(function (el) {
+        el.textContent = redact.checked ? (el.dataset.redacted || '[REDACTED]') : el.dataset.plain;
+      });
+      document.getElementById('banner-redact-note').hidden = !redact.checked;
+    });
+  }
+
+  document.getElementById('download').addEventListener('click', function () {
+    var clone = document.documentElement.cloneNode(true);
+    var cloneRedact = clone.querySelector('#redact');
+    if (cloneRedact && redact && redact.checked) {
+      [].slice.call(clone.querySelectorAll('.secret')).forEach(function (el) {
+        el.textContent = el.getAttribute('data-redacted') || '[REDACTED]';
+        el.removeAttribute('data-plain');
+      });
+    }
+    var body = clone.querySelector('.toolbar');
+    if (body) body.remove();
+    var blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (document.title || 'logloom-report').replace(/[^a-z0-9-_]+/gi, '-').replace(/-+/g, '-').toLowerCase() + '.html';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  });
+})();
+</script>
+</body>
+</html>

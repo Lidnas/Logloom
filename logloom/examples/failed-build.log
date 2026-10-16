@@ -1,0 +1,73 @@
+Compiling logloom v0.1.0 (/home/dev/project)
+   Compiling serde v1.0.197
+   Compiling tokio v1.35.1
+   Compiling hyper v0.27.2
+warning: unused variable: `ctx`
+   --> src/server.rs:142:9
+    |
+142 |     let ctx = build_context(&config);
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_ctx`
+    |
+    = warning: `logloom::server` (lib) generated 1 warning
+warning: field `retries` is never read
+   --> src/client.rs:88:5
+warning: 3 warnings emitted
+
+error[E0433]: failed to resolve: use of undeclared crate or module `tokio_util`
+ --> src/transport.rs:19:5
+  |
+19 | use tokio_util::codec::FramedRead;
+  |     ^^^^^^ help: you may be missing a crate
+  |
+  = help: if you wanted to use a crate named `tokio_util`, use `cargo add tokio_util`
+
+error[E0425]: cannot find value `config` in this scope
+  --> src/transport.rs:27:20
+   |
+27 |     let settings = config.settings();
+   |                   ^^^^^^^ not found in this scope
+
+error[E0277]: the trait bound `Request: std::fmt::Display` is not satisfied
+   --> src/transport.rs:41:36
+   |
+41 |     println!("{}", request);
+   |                         ^^^^^^^ `Request` cannot be formatted with the default formatter
+
+For more information about this error, try `cargo check --message-format=json`.
+error: could not compile `logloom` (lib) due to 3 previous errors; 1 warning emitted
+npm WARN deprecated request@2.88.2: request has been deprecated, see https://github.com/request/request/issues/3142
+npm WARN deprecated tough-cookie@4.1.3: tough-cookie has been deprecated
+npm ERR! code ELIFECYCLE
+npm ERR! errno 1
+npm ERR! @logloom/web@0.1.0 build: `vite build`
+npm ERR! Exit status 1
+npm ERR!   logloom@0.1.0 dev
+npm ERR!   `--mode production` was not specified
+npm ERR! Network registry request to https://registry.npmjs.org/vite failed, reason: read ECONNRESET
+[10:22:41.103] [ERROR] (web:1420): Failed to load env: Error: ENOENT: no such file or directory, open '/home/dev/project/.env.production'
+[10:22:41.140] [INFO ] (web:1420): Vite v5.0.12
+[10:22:41.141] [INFO ] (web:1420): building for production...
+[10:22:41.512] [ERROR] (web:1420): error during build:
+[10:22:41.513] [ERROR] (web:1420): Error: Build failed with 1 error:
+[10:22:41.514] [ERROR] (web:1420): error: Could not resolve "./routes/missing.ts" from "src/main.ts"
+[10:22:41.601] [INFO ] (web:1420): ELIFECYCLE  Command failed with exit code 1.
+W0910 10:22:42.001  3301 build.rs:77] failed to read Cargo.lock cache entry
+E0910 10:22:42.220  3301 build.rs:91] failed to acquire lock on target directory: Resource temporarily unavailable
+D0910 10:22:42.880  3301 build.rs:92] finished `dev` profile [unoptimized + debuginfo] target(s) in 1.84s
+Cache entry for key `deps/liblogloom` invalidated: file changed on disk
+make[1]: *** [Makefile:42: build] Error 2
+make: *** [Makefile:17: all] Error 2
+docker: Error response from daemon: could not select image: no match for "logloom:0.1.0".
+FAILED tests/integration/test_docker.py::test_image_builds - docker image build failed
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/click/core.py", line 1232, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/usr/lib/python3/dist-packages/click/core.py", line 1054, in invoke
+    return __self__.callback(*args, **kwargs)
+click.exceptions.UsageError: Missing option '--config'.
+ERROR: build step failed: command 'poetry build' exited with 2
+Build step failed
+Done in 6.42s
+subprocess.CalledProcessError: return code 1
+fatal: not a git repository (or any of the parent directories): .git
+Error: The process '/usr/bin/docker' aborted with exit code 1

@@ -1,0 +1,104 @@
+========== test session starts ==========
+platform linux -- Python 3.11.6, pytest-7.4.3, pluggy-1.3.0
+rootdir: /home/dev/project
+collected 214 items
+
+tests/api/test_users.py ......................                             [ 10%]
+tests/api/test_orders.py .......................                             [ 21%]
+tests/api/test_payments.py FFFFFF                                              [ 31%]
+tests/core/test_loader.py .F....                                               [ 35%]
+tests/core/test_cache.py ..........                                            [ 40%]
+tests/core/test_retry.py ...........                                           [ 45%]
+tests/utils/test_helpers.py .............                                       [ 51%]
+tests/utils/test_validators.py ....W....                                       [ 56%]
+tests/integration/test_webhook.py ......                                      [ 60%]
+tests/integration/test_db.py .................                                [ 69%]
+tests/integration/test_queue.py ............                                  [ 74%]
+tests/unit/test_parser.py ..................                                  [ 82%]
+tests/unit/test_cache_keys.py ........                                        [ 86%]
+tests/unit/test_timezones.py ...........                                      [ 90%]
+
+=================================== FAILURES ===================================
+______________________ test_charge_card_declined ______________________
+
+    def test_charge_card_declined(client, db):
+        order = create_order(total=1999)
+>       response = client.post("/api/payments", json=order)
+E       requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.stripe.com', port=443): Max retries exceeded
+
+tests/api/test_payments.py:88: ConnectionError
+______________________ test_refund_idempotent ______________________
+
+    def test_refund_idempotent(client, db):
+        order = create_order(total=1999)
+>       response = client.post("/api/payments", json=order)
+E       requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.stripe.com', port=443): Max retries exceeded
+
+tests/api/test_payments.py:88: ConnectionError
+______________________ test_partial_capture ____________________
+
+    def test_partial_capture(client, db):
+        order = create_order(total=1999)
+>       response = client.post("/api/payments", json=order)
+E       requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.stripe.com', port=443): Max retries exceeded
+
+tests/api/test_payments.py:88: ConnectionError
+______________________ test_saved_card ____________________
+
+    def test_saved_card(client, db):
+        order = create_order(total=1999)
+>       response = client.post("/api/payments", json=order)
+E       requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.stripe.com', port=443): Max retries exceeded
+
+tests/api/test_payments.py:88: ConnectionError
+______________________ test_zero_amount ____________________
+
+    def test_zero_amount(client, db):
+        order = create_order(total=1999)
+>       response = client.post("/api/payments", json=order)
+E       requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.stripe.com', port=443): Max retries exceeded
+
+tests/api/test_payments.py:88: ConnectionError
+______________________ test_currency_rounding ____________________
+
+    def test_currency_rounding(client, db):
+        order = create_order(total=1999)
+>       response = client.post("/api/payments", json=order)
+E       requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.stripe.com', port=443): Max retries exceeded
+
+tests/api/test_payments.py:88: ConnectionError
+_____________ test_loader_resolves_relative_import _____________________
+
+    def test_loader_resolves_relative_import():
+        loader = ModuleLoader(root="/app")
+>       spec = loader.load("./services/billing.py")
+E       ModuleNotFoundError: No module named 'services.billing'
+
+tests/core/test_loader.py:34: ModuleNotFoundError
+_______________ test_cache_invalidates_on_write ________________________
+
+    def test_cache_invalidates_on_write(cache):
+        cache.set("a", 1)
+>       assert cache.get("a") == 2
+E       assert 1 == 2
+E        +  where 1 = cache.get("a")
+
+tests/core/test_cache.py:61: AssertionError
+___________ test_validators_reject_future_dates ________________________
+
+    def test_validators_reject_future_dates():
+>       validate_window(start="2027-01-01")
+E       DeprecationWarning: strftime() is deprecated on Windows in Python 3.12
+
+tests/utils/test_validators.py:22: DeprecationWarning
+=========================== short test summary info ============================
+FAILED tests/api/test_payments.py::test_charge_card_declined - ConnectionError: ...
+FAILED tests/api/test_payments.py::test_refund_idempotent - ConnectionError: ...
+FAILED tests/api/test_payments.py::test_partial_capture - ConnectionError: ...
+FAILED tests/api/test_payments.py::test_saved_card - ConnectionError: ...
+FAILED tests/api/test_payments.py::test_zero_amount - ConnectionError: ...
+FAILED tests/api/test_payments.py::test_currency_rounding - ConnectionError: ...
+FAILED tests/core/test_loader.py::test_loader_resolves_relative_import - ModuleNotFoundError: ...
+FAILED tests/core/test_cache.py::test_cache_invalidates_on_write - AssertionError: assert 1 == 2
+tests/utils/test_validators.py::test_validators_reject_future_dates - DeprecationWarning: ...
+============================= 9 failed, 205 passed in 41.02s (0.03s + 0.41s) =========================

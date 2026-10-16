@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{HEAD_TITLE}}</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#14181f; --muted:#5b6472; --line:#e3e7ee;
+  --fatal:#b3122c; --error:#d1293d; --warning:#a86200; --info:#1668b3; --debug:#5b6472; --log:#4b5563;
+  --accent:#2f5fd0; --mark:#fff3bf; --mark-ink:#6a4b00; --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 16px rgba(16,24,40,.05);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1216; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4b2; --line:#242c37;
+    --fatal:#ff6b81; --error:#ff7b72; --warning:#e3b341; --info:#79c0ff; --debug:#9aa4b2; --log:#9aa4b2;
+    --accent:#7aa2f7; --mark:#4a3c00; --mark-ink:#ffe08a; --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 72px}
+header.top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+h1{font-size:22px;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.sub code{font-family:var(--mono)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.pads{padding:16px 18px}
+.banner{border-radius:12px;padding:12px 16px;margin-bottom:16px;border:1px solid;display:flex;gap:12px;align-items:flex-start;font-size:14px}
+.banner.warn{background:rgba(226,180,60,.12);border-color:rgba(226,180,60,.5)}
+.banner.ok{background:rgba(60,170,120,.10);border-color:rgba(60,170,120,.4)}
+.banner strong{white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin-bottom:18px}
+.stat{padding:12px 14px}
+.stat .n{font-size:22px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:2px}
+.toolbar{position:sticky;top:0;z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:var(--shadow)}
+input[type=search]{flex:1 1 240px;min-width:180px;padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:14px}
+input[type=search]:focus{outline:2px solid var(--accent);outline-offset:1px}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;cursor:pointer;user-select:none;background:var(--bg)}
+.chip input{margin:0;accent-color:var(--accent)}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+button{font:inherit;font-size:12px;padding:6px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--accent)}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:26px 0 10px}
+.groups{display:flex;flex-direction:column;gap:10px}
+details.group{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+details.group[hidden]{display:none}
+summary{cursor:pointer;padding:12px 15px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"\25B8";color:var(--muted);font-size:12px;transition:transform .12s ease}
+details[open]>summary::before{transform:rotate(90deg)}
+.sev{font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 7px;border-radius:5px;color:#fff;text-transform:uppercase;white-space:nowrap}
+.sev.fatal{background:var(--fatal)}.sev.error{background:var(--error)}.sev.warning{background:var(--warning)}
+.sev.info{background:var(--info)}.sev.debug{background:var(--debug)}.sev.log{background:var(--log)}
+.label{font-weight:600}
+.count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.loc{font-size:12px;color:var(--muted);margin-left:auto;font-family:var(--mono)}
+.body{padding:0 15px 14px;border-top:1px solid var(--line)}
+.msg{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin:12px 0;white-space:pre-wrap;word-break:break-word}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.tag{font-size:11px;font-family:var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+ol.occ{margin:10px 0 0;padding-left:22px;font-size:13px;color:var(--muted);max-height:220px;overflow:auto}
+ol.occ li{font-family:var(--mono);break-inside:avoid;padding:1px 0}
+pre.ctx{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;margin:12px 0 0;white-space:pre;color:var(--muted)}
+mark.secret,.secret{background:var(--mark);color:var(--mark-ink);border-radius:3px;padding:0 2px}
+.secret{outline:1px dashed rgba(128,90,0,.5)}
+table.secrets{width:100%;border-collapse:collapse;font-size:13px}
+table.secrets th,table.secrets td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.secrets th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+table.secrets code{font-family:var(--mono);font-size:12px}
+.muted{color:var(--muted)}
+pre.raw{font-family:var(--mono);font-size:12px;line-height:1.5;margin:0;padding:12px 0;overflow-x:auto;max-height:70vh;overflow-y:auto}
+.rl{display:flex;gap:12px;padding:0 14px;border-left:3px solid transparent}
+.rl:hover{background:var(--bg)}
+.rl .ln{flex:0 0 58px;text-align:right;color:var(--muted);user-select:none;font-size:11px;padding-top:2px}
+.rl .tx{white-space:pre-wrap;word-break:break-word;flex:1;min-width:0}
+.rl[data-sev="fatal"],.rl[data-sev="error"]{border-left-color:var(--error)}
+.rl[data-sev="warning"]{border-left-color:var(--warning)}
+.rl[data-sev="info"]{border-left-color:var(--info)}
+.rl[data-sev="blank"],.rl[data-sev="noise"],.rl[data-sev="header"]{opacity:.55}
+.rl[hidden]{display:none}
+footer{margin-top:34px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+footer a{color:var(--accent)}
+.noscript{margin-top:12px;font-size:13px;color:var(--muted)}
+.empty{padding:22px;text-align:center;color:var(--muted);font-size:14px}
+@media print{.toolbar{display:none}details.group{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>{{TITLE}}</h1>
+      <div class="sub">source <code>{{SOURCE}}</code> &middot; generated {{GENERATED}} by Logloom {{VERSION}}</div>
+    </div>
+    <div class="sub">{{LINE_COUNT}} lines analysed</div>
+  </header>
+
+  {{BANNER}}
+
+  <div class="stats">{{STATS}}</div>
+
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="Search messages, files, signatures&hellip;" aria-label="Search report">
+    <div class="filters" id="filters"></div>
+    <button type="button" id="toggle-all">Collapse all</button>
+    <button type="button" id="toggle-raw">Hide raw output</button>
+    {{REDACT_BUTTON}}
+    <button type="button" id="download">Download this view</button>
+  </div>
+
+  <h2>Findings <span class="muted" id="visible-count"></span></h2>
+  <div class="groups" id="groups">{{ISSUES}}</div>
+  <noscript><p class="noscript">JavaScript is disabled, so search and filters are unavailable. All grouped findings and the full raw output below are still rendered.</p></noscript>
+
+  {{SECRETS}}
+
+  <h2 id="raw-heading">Raw output</h2>
+  <div class="card pads" id="raw-wrap" style="padding:0 4px"><pre class="raw" id="raw">{{RAW}}</pre></div>
+
+  <footer>
+    Logloom organises evidence; it does not claim to identify the root cause.
+    Every finding links back to the original line numbers, and the raw output above is unmodified.
+  </footer>
+</div>
+<script>
+(function () {
+  var q = document.getElementById('q');
+  var groups = [].slice.call(document.querySelectorAll('details.group'));
+  var filters = document.getElementById('filters');
+  var raw = document.getElementById('raw');
+  var rawLines = [].slice.call(raw.querySelectorAll('.rl'));
+  var visibleCount = document.getElementById('visible-count');
+
+  var severities = {};
+  groups.forEach(function (g) { severities[g.dataset.severity] = (severities[g.dataset.severity] || 0) + 1; });
+  var order = ['fatal', 'error', 'warning', 'info', 'debug', 'log'];
+  order.forEach(function (sev) {
+    if (!severities[sev]) return;
+    var label = document.createElement('label');
+    label.className = 'chip';
+    label.innerHTML = '<input type="checkbox" value="' + sev + '" checked><span class="dot" style="background:var(--' + sev + ')"></span>' + sev + ' (' + severities[sev] + ')';
+    filters.appendChild(label);
+  });
+
+  function activeSeverities() {
+    var out = [];
+    [].slice.call(filters.querySelectorAll('input')).forEach(function (i) { if (i.checked) out.push(i.value); });
+    return out;
+  }
+
+  function apply() {
+    var term = (q.value || '').toLowerCase().trim();
+    var sevs = activeSeverities();
+    var shown = 0;
+    groups.forEach(function (g) {
+      var okSev = sevs.indexOf(g.dataset.severity) !== -1;
+      var okTerm = !term || g.dataset.search.indexOf(term) !== -1;
+      var visible = okSev && okTerm;
+      g.hidden = !visible;
+      if (visible) shown++;
+    });
+    visibleCount.textContent = shown === groups.length ? '' : '(' + shown + ' of ' + groups.length + ')';
+    rawLines.forEach(function (row) {
+      row.hidden = !!term && row.dataset.search.indexOf(term) === -1;
+    });
+    if (typeof syncToggleLabel === 'function') syncToggleLabel();
+  }
+
+  q.addEventListener('input', apply);
+  filters.addEventListener('change', apply);
+
+  var toggleAll = document.getElementById('toggle-all');
+
+  function syncToggleLabel() {
+    var open = groups.filter(function (g) { return !g.hidden && g.open; }).length;
+    toggleAll.textContent = open > 0 ? 'Collapse all' : 'Expand all';
+  }
+
+  toggleAll.addEventListener('click', function () {
+    var anyOpen = groups.some(function (g) { return !g.hidden && g.open; });
+    groups.forEach(function (g) { if (!g.hidden) g.open = !anyOpen; });
+    syncToggleLabel();
+  });
+
+  document.getElementById('toggle-raw').addEventListener('click', function () {
+    var wrap = document.getElementById('raw-wrap');
+    wrap.hidden = !wrap.hidden;
+    this.textContent = wrap.hidden ? 'Show raw output' : 'Hide raw output';
+  });
+
+  var redact = document.getElementById('redact');
+  var redactNote = document.getElementById('banner-redact-note');
+  if (redact) {
+    redact.addEventListener('change', function () {
+      [].slice.call(document.querySelectorAll('.secret')).forEach(function (el) {
+        el.textContent = redact.checked ? (el.dataset.redacted || '[REDACTED]') : el.dataset.plain;
+      });
+      if (redactNote) redactNote.hidden = !redact.checked;
+    });
+  }
+
+  document.getElementById('download').addEventListener('click', function () {
+    var clone = document.documentElement.cloneNode(true);
+    var cloneRedact = clone.querySelector('#redact');
+    if (cloneRedact && redact && redact.checked) {
+      [].slice.call(clone.querySelectorAll('.secret')).forEach(function (el) {
+        el.textContent = el.getAttribute('data-redacted') || '[REDACTED]';
+        el.removeAttribute('data-plain');
+      });
+    }
+    var body = clone.querySelector('.toolbar');
+    if (body) body.remove();
+    var blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (document.title || 'logloom-report').replace(/[^a-z0-9-_]+/gi, '-').replace(/-+/g, '-').toLowerCase() + '.html';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  });
+
+  // Run last: every handler above is registered before the first paint pass.
+  apply();
+  syncToggleLabel();
+})();
+</script>
+</body>
+</html>

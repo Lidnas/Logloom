@@ -1,0 +1,44 @@
+==> Building logloom <==
+[1/6] Checking if the build is up to date
+[2/6] Compiling serde v1.0.197
+[3/6] Compiling tokio v1.35.1
+[4/6] Compiling hyper v0.27.2
+[5/6] Compiling logloom v0.1.0
+[6/6] Finished `release` profile [optimized] target(s) in 24.31s
+
+    Finished release [optimized] target(s) in 24.31s
+  Downloaded serde v1.0.197
+  Downloaded tokio v1.35.1
+  Downloaded hyper v0.27.2
+  Downloaded bytes v1.5.0
+  Downloaded pin-project-lite v0.2.14
+  Downloaded socket2 v0.5.5
+  Downloaded futures-channel v0.3.29
+  Downloaded http-body v1.0.1
+  Downloaded httparse v1.8.0
+  Downloaded itoa v1.0.10
+   Compiling shuffle v0.1.10
+test result: FAILED. 12 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out
+running 15 tests
+test integration::retry_policy::exhausts_retries ... FAILED
+test integration::retry_policy::backs_off_linearly ... FAILED
+test integration::retry_policy::gives_up_after_budget ... FAILED
+
+failures:
+
+---- integration::retry_policy::exhausts_retries stdout ----
+thread 'integration::retry_policy::exhausts_retries' panicked at src/retry.rs:118:9:
+assertion failed: attempts == 5
+thread 'integration::retry_policy::gives_up_after_budget' panicked at src/retry.rs:118:9:
+assertion failed: attempts == 5
+
+thread 'integration::retry_policy::backs_off_linearly' panicked at src/retry.rs:118:9:
+thread 'integration::retry_policy::gives_up_after_budget' panicked at src/retry.rs:118:9:
+ERROR connection refused to 127.0.0.1:5432 after 3 attempts
+ERROR connection refused to 127.0.0.1:5432 after 1 attempts
+ERROR connection refused to 127.0.0.1:5432 after 9 attempts
+error: test failed, to rerun pass `--lib`
+E: 错误: 无法创建目标目录 “/build/target/debug”: Permission denied (os error 13)
+W: 警告: 使用了已弃用的标志 `--out-dir`
+note: `cargo build` 的输出显示 12 条警告
+  进程返回码: 101
