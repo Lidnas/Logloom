@@ -1,0 +1,15 @@
+{
+  "name": "logloom-promo-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Promotional video for Logloom (github.com/Lidnas/Logloom) — canvas-rendered, ffmpeg-composited.",
+  "type": "module",
+  "scripts": {
+    "frames": "node render.js 0 56 ./frames",
+    "video": "node render.js 0 56 ./frames && bash scripts/render-video.sh",
+    "qa": "node render.js 300 303 ./qa"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.80"
+  }
+}
